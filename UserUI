@@ -1,0 +1,19 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class UserInterface2 : MonoBehaviour
+{
+    public Text VelocityX;
+    public Text VelocityY;
+    public p2funk p2;
+
+    private void Update()
+    {
+        // TESTING UI SCRIPTS
+        VelocityX.text = "Velocity X: " + p2.rb2d.velocity.x;
+        VelocityY.text = "Velocity Y: " + p2.rb2d.velocity.y;
+        // TESTING UI SCRIPTS
+    }
+}
