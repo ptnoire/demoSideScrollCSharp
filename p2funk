@@ -1,0 +1,140 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class p2funk : MonoBehaviour
+{
+    private Animator an;
+    private SpriteRenderer spr;
+    public Rigidbody2D rb2d;
+    private BoxCollider2D bc2d;
+    Vector3 xInput;
+    private int speed = 12;
+    float jumpVelocity = 10f;
+    // Grounded
+    public bool isGrounded;
+    public Transform grCheck;
+    public float grRadius;
+    public LayerMask whatisGround;
+    // Double Jump
+    public int extraJumpCount;
+    public int exJump;
+    // Dash
+    public float dSpeed;
+    public float dTime;
+    public float startDTime;
+    public int exDash;
+    public int exDashCount;
+    public float dbi;
+    private float lastImageXpos;
+    //
+    public PlayerState playerState;
+
+    //BOGO
+
+
+    void Start()
+    {
+        rb2d = transform.GetComponent<Rigidbody2D>();
+        an = GetComponent<Animator>();
+        spr = GetComponent<SpriteRenderer>();
+        bc2d = GetComponent<BoxCollider2D>();
+        ChangeState(PlayerState.Movement);
+    }
+
+    void Update()
+    {
+        if (playerState == PlayerState.Movement)
+        {
+            if (isGrounded)
+            {
+                exJump = extraJumpCount;
+                exDash = exDashCount;
+            }
+            if (xInput.x < 0)
+            {
+                spr.flipX = true;
+            }
+            else if (xInput.x > 0)
+            {
+                spr.flipX = false;
+            }
+
+            if (Input.GetButtonDown("Jump"))
+            {
+                if (isGrounded)
+                {
+                    Jump();
+                    an.SetTrigger("1xJump");
+                }
+                if (!isGrounded && exJump > 0)
+                {
+                    Jump();
+                    exJump--;
+                    an.SetTrigger("2xJump");
+                }
+            }
+
+            // -- Dash Function --
+            if (Input.GetButtonDown("Dash") && exDash > 0)
+            {
+                if (dTime <= 0)
+                {
+                    dTime = startDTime;
+                    rb2d.velocity = new Vector2(0, rb2d.velocity.y);
+                }
+                else
+                {
+
+                    dTime -= Time.deltaTime;
+                    exDash--;
+                    AfterImageCode.Instance.GetFromPool();
+                    lastImageXpos = transform.position.x;
+                    if (spr.flipX == true)
+                    {
+                        rb2d.velocity = new Vector2(-1 * dSpeed, rb2d.velocity.y);
+                        an.SetTrigger("Dash");
+                    }
+                    else
+                    {
+                        rb2d.velocity = new Vector2(+1 * dSpeed, rb2d.velocity.y);
+                        an.SetTrigger("Dash");
+                    }
+                }
+                if (Mathf.Abs(transform.position.x - lastImageXpos) > dbi)
+                {
+                    AfterImageCode.Instance.GetFromPool();
+                    lastImageXpos = transform.position.x;
+                }
+            }
+
+            // Animator Settings
+            an.SetBool("Grounded", isGrounded);
+            an.SetFloat("Vertical Velocity", rb2d.velocity.y);
+            float chSpeed = Mathf.Abs(xInput.x);
+            an.SetFloat("SPEED", chSpeed);
+        }
+    }
+    private void FixedUpdate()
+    {
+        isGrounded = Physics2D.OverlapCircle(grCheck.position, grRadius, whatisGround);
+        // Horizontal Movement
+        xInput = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
+        transform.position = transform.position + xInput * Time.deltaTime * speed;
+    }
+    private void Jump()
+    {
+        rb2d.velocity = new Vector2(rb2d.velocity.x, +1 * jumpVelocity);
+    }
+    private void ChangeState(PlayerState Data)
+    {
+        playerState = Data;
+    }
+}
+public enum PlayerState
+{
+    Movement,
+    Combat,
+    Casting,
+    LockOut
+}
